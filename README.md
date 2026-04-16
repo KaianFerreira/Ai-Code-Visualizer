@@ -127,14 +127,50 @@ cargo run -- serve
 
 ## Optional: AI enrichment (`ai-bridge`)
 
-Copy **`ai-bridge/.env-example`** to **`ai-bridge/.env`** and add API keys / model settings. Then:
+The bridge reads **`graph_output.json`** from the Rust analyzer, calls two LLM roles in chunks (architecture layer + security priority), and writes **`enriched_graph.json`** with `metadata.layer` and `metadata.security_priority` on each file.
+
+### Setup
+
+1. Copy **`ai-bridge/.env-example`** to **`ai-bridge/.env`**.
+2. Install dependencies (from repo root): `cd ai-bridge && npm ci`
+3. Fill in **API keys** and optional **model overrides** (see table below).
+4. Run:
 
 ```bash
 cd ai-bridge
 npm run dev
 ```
 
-Produces enriched graph JSON you can place as **`frontend/public/enriched_graph.json`** or merge into your workflow.
+5. Copy or symlink the result to **`frontend/public/enriched_graph.json`** if you want the dashboard to load it on startup.
+
+### API keys (required)
+
+| Variable | Purpose |
+|----------|---------|
+| **`ANTHROPIC_API_KEY`** | Anthropic (Claude) — used by the **architect** agent for architectural layer labels. |
+| **`OPENAI_API_KEY`** | OpenAI — used by the **security** agent for security priority / sensitive-area hints. |
+
+Do not commit real keys. Both must be set to non-placeholder values or the agents throw at startup.
+
+### Model selection
+
+You choose models via environment variables. The code prefers the **primary** name (aligned with `.env-example`); **legacy** names still work if the primary is unset.
+
+| Role | Primary variable | Legacy fallback | Default if unset |
+|------|------------------|-----------------|------------------|
+| Architect (layers) | **`ANTHROPIC_ARCHITECT_MODEL`** | `ANTHROPIC_MODEL` | `claude-3-5-sonnet-latest` |
+| Security (priority) | **`OPENAI_SECURITY_MODEL`** | `OPENAI_MODEL` | `gpt-4o` |
+
+Use any model IDs your provider accounts support (for example newer Claude or GPT snapshots). Keep architect on Anthropic and security on OpenAI unless you change `AgentManager` in code.
+
+### Orchestration and I/O
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| **`CHUNK_SIZE`** | `10` | Files per LLM batch (must be a positive integer). |
+| **`DELAY_BETWEEN_CHUNKS_MS`** | `2000` | Pause between chunks to reduce rate limits (milliseconds, ≥ 0). |
+| **`GRAPH_INPUT`** | *(auto)* | Absolute or relative path to raw `graph_output.json`. If unset, the bridge tries `graph_output.json`, `backend/graph_output.json`, or `../backend/graph_output.json` relative to the current working directory. |
+| **`ENRICHED_OUTPUT`** | `enriched_graph.json` in `cwd` | Where to write the enriched graph (also used as a **resume checkpoint**). |
 
 ---
 
@@ -146,6 +182,14 @@ Produces enriched graph JSON you can place as **`frontend/public/enriched_graph.
 | `SCANNER_API_URL` | `frontend` (Vite) | Proxy target for `/api` during `npm run dev`. |
 | `RUST_SCANNER_BIN` | `scanner-api` | Absolute path to `backend` executable; skips `cargo run` fallback. |
 | `CORS_ORIGIN` | `scanner-api` | Restrict CORS when calling the API from a non-proxied origin. |
+| `ANTHROPIC_API_KEY` | `ai-bridge` | Anthropic API key for architect agent. |
+| `OPENAI_API_KEY` | `ai-bridge` | OpenAI API key for security agent. |
+| `ANTHROPIC_ARCHITECT_MODEL` | `ai-bridge` | Claude model id for layers (`ANTHROPIC_MODEL` fallback). |
+| `OPENAI_SECURITY_MODEL` | `ai-bridge` | OpenAI model id for security (`OPENAI_MODEL` fallback). |
+| `CHUNK_SIZE` | `ai-bridge` | Files per enrichment chunk. |
+| `DELAY_BETWEEN_CHUNKS_MS` | `ai-bridge` | Delay between chunks (ms). |
+| `GRAPH_INPUT` | `ai-bridge` | Path to input `graph_output.json`. |
+| `ENRICHED_OUTPUT` | `ai-bridge` | Path to output / checkpoint `enriched_graph.json`. |
 
 ---
 
