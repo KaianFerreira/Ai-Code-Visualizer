@@ -14,6 +14,19 @@ function requireEnv(name: string, provider: "anthropic" | "openai"): string {
   return v.trim();
 }
 
+/** Prefer primary key (matches `.env-example`); fall back to legacy name. */
+function envModelOrFallback(primary: string, legacy: string, defaultModel: string): string {
+  const a = process.env[primary]?.trim();
+  if (a) {
+    return a;
+  }
+  const b = process.env[legacy]?.trim();
+  if (b) {
+    return b;
+  }
+  return defaultModel;
+}
+
 export class AgentManager {
   readonly anthropic: Anthropic;
   readonly openai: OpenAI;
@@ -33,7 +46,14 @@ export class AgentManager {
     this.anthropic = new Anthropic({ apiKey: anthropicKey });
     this.openai = new OpenAI({ apiKey: openaiKey });
     this.anthropicModel =
-      options?.anthropicModel ?? process.env["ANTHROPIC_MODEL"] ?? "claude-sonnet-4-20250514";
-    this.openaiModel = options?.openaiModel ?? process.env["OPENAI_MODEL"] ?? "gpt-4o";
+      options?.anthropicModel ??
+      envModelOrFallback(
+        "ANTHROPIC_ARCHITECT_MODEL",
+        "ANTHROPIC_MODEL",
+        "claude-3-5-sonnet-latest",
+      );
+    this.openaiModel =
+      options?.openaiModel ??
+      envModelOrFallback("OPENAI_SECURITY_MODEL", "OPENAI_MODEL", "gpt-4o");
   }
 }

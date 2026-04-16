@@ -1,4 +1,5 @@
 import type { AgentManager } from "./AgentManager.js";
+import { delay } from "./asyncHelpers.js";
 import { AgentApiError, AgentParseError } from "./errors.js";
 import { asRecord, parseJsonObject } from "./jsonUtils.js";
 import type { FileNode, LayerMap, SecurityFinding, SecurityMap } from "./types.js";
@@ -98,6 +99,60 @@ function architectPromptForBatch(batch: FileNode[]): string {
   return `Analyze the following code structure: ${data}. Identify the architectural pattern (e.g., Clean Architecture, MVC) and assign a "layer" (Infrastructure, Domain, Application, or UI) to each file. Return the result strictly as a JSON object mapping file paths to their layers.`;
 }
 
+function httpStatusFromUnknown(e: unknown): number | undefined {
+  if (e instanceof AgentApiError && e.status !== undefined) {
+    return e.status;
+  }
+  const err = e as {
+    status?: number;
+    statusCode?: number;
+    message?: string;
+    error?: { status?: number; message?: string };
+  };
+  if (typeof err.status === "number") {
+    return err.status;
+  }
+  if (typeof err.statusCode === "number") {
+    return err.statusCode;
+  }
+  if (err.error && typeof err.error.status === "number") {
+    return err.error.status;
+  }
+  return undefined;
+}
+
+function isRateLimitError(e: unknown): boolean {
+  if (httpStatusFromUnknown(e) === 429) {
+    return true;
+  }
+  const err = e as { message?: string };
+  const msg = typeof err.message === "string" ? err.message : "";
+  return /\b429\b|rate\s*limit|tokens?\s*per\s*minute|tpm\b|too\s+many\s+requests/i.test(
+    msg,
+  );
+}
+
+async function withRateLimitRetries<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  const maxAttempts = 3;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastError = e;
+      if (attempt >= maxAttempts || !isRateLimitError(e)) {
+        throw e;
+      }
+      const backoffMs = 5000 * attempt;
+      console.warn(
+        `  ${label}: rate limit (attempt ${attempt}/${maxAttempts}); waiting ${backoffMs}ms before retry...`,
+      );
+      await delay(backoffMs);
+    }
+  }
+  throw lastError;
+}
+
 function securityPromptForBatch(batch: FileNode[]): string {
   const slim = batch.map((f) => ({
     path: f.path,
@@ -113,81 +168,85 @@ async function architectBatch(
   manager: AgentManager,
   batch: FileNode[],
 ): Promise<LayerMap> {
-  const prompt = architectPromptForBatch(batch);
-  try {
-    const msg = await manager.anthropic.messages.create({
-      model: manager.anthropicModel,
-      max_tokens: 8192,
-      system: ARCHITECT_SYSTEM,
-      messages: [{ role: "user", content: prompt }],
-    });
-    const text = textFromAnthropicContent(
-      msg.content as Array<{ type: string; text?: string }>,
-    );
-    if (!text.trim()) {
-      throw new AgentParseError("Empty response from Anthropic.", text);
-    }
-    let parsed: unknown;
+  return withRateLimitRetries("Architect (Anthropic)", async () => {
+    const prompt = architectPromptForBatch(batch);
     try {
-      parsed = parseJsonObject(text);
-    } catch (e) {
-      throw new AgentParseError(
-        `Failed to parse Architect JSON: ${(e as Error).message}`,
-        text.slice(0, 2000),
+      const msg = await manager.anthropic.messages.create({
+        model: manager.anthropicModel,
+        max_tokens: 8192,
+        system: ARCHITECT_SYSTEM,
+        messages: [{ role: "user", content: prompt }],
+      });
+      const text = textFromAnthropicContent(
+        msg.content as Array<{ type: string; text?: string }>,
       );
+      if (!text.trim()) {
+        throw new AgentParseError("Empty response from Anthropic.", text);
+      }
+      let parsed: unknown;
+      try {
+        parsed = parseJsonObject(text);
+      } catch (e) {
+        throw new AgentParseError(
+          `Failed to parse Architect JSON: ${(e as Error).message}`,
+          text.slice(0, 2000),
+        );
+      }
+      return normalizeLayerMap(parsed);
+    } catch (e) {
+      if (e instanceof AgentParseError) {
+        throw e;
+      }
+      const err = e as { status?: number; message?: string };
+      throw new AgentApiError("anthropic", err.message ?? "Anthropic request failed", {
+        status: httpStatusFromUnknown(e) ?? err.status,
+        cause: e,
+      });
     }
-    return normalizeLayerMap(parsed);
-  } catch (e) {
-    if (e instanceof AgentParseError) {
-      throw e;
-    }
-    const err = e as { status?: number; message?: string };
-    throw new AgentApiError("anthropic", err.message ?? "Anthropic request failed", {
-      status: err.status,
-      cause: e,
-    });
-  }
+  });
 }
 
 async function securityBatch(
   manager: AgentManager,
   batch: FileNode[],
 ): Promise<SecurityMap> {
-  const prompt = securityPromptForBatch(batch);
-  try {
-    const res = await manager.openai.chat.completions.create({
-      model: manager.openaiModel,
-      messages: [
-        { role: "system", content: SECURITY_SYSTEM },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.2,
-    });
-    const text = res.choices[0]?.message?.content ?? "";
-    if (!text.trim()) {
-      throw new AgentParseError("Empty response from OpenAI.", text);
-    }
-    let parsed: unknown;
+  return withRateLimitRetries("Security (OpenAI)", async () => {
+    const prompt = securityPromptForBatch(batch);
     try {
-      parsed = parseJsonObject(text);
+      const res = await manager.openai.chat.completions.create({
+        model: manager.openaiModel,
+        messages: [
+          { role: "system", content: SECURITY_SYSTEM },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.2,
+      });
+      const text = res.choices[0]?.message?.content ?? "";
+      if (!text.trim()) {
+        throw new AgentParseError("Empty response from OpenAI.", text);
+      }
+      let parsed: unknown;
+      try {
+        parsed = parseJsonObject(text);
+      } catch (e) {
+        throw new AgentParseError(
+          `Failed to parse Security JSON: ${(e as Error).message}`,
+          text.slice(0, 2000),
+        );
+      }
+      return normalizeSecurityMap(parsed);
     } catch (e) {
-      throw new AgentParseError(
-        `Failed to parse Security JSON: ${(e as Error).message}`,
-        text.slice(0, 2000),
-      );
+      if (e instanceof AgentParseError) {
+        throw e;
+      }
+      const err = e as { status?: number; message?: string };
+      throw new AgentApiError("openai", err.message ?? "OpenAI request failed", {
+        status: httpStatusFromUnknown(e) ?? err.status,
+        cause: e,
+      });
     }
-    return normalizeSecurityMap(parsed);
-  } catch (e) {
-    if (e instanceof AgentParseError) {
-      throw e;
-    }
-    const err = e as { status?: number; message?: string };
-    throw new AgentApiError("openai", err.message ?? "OpenAI request failed", {
-      status: err.status,
-      cause: e,
-    });
-  }
+  });
 }
 
 /**

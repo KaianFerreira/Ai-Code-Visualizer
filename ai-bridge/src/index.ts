@@ -4,6 +4,7 @@ import { access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { delay } from "./asyncHelpers.js";
 import { AgentManager } from "./AgentManager.js";
 import { architectAgent, securityAgent } from "./agents.js";
 import type {
@@ -16,6 +17,46 @@ import type {
   SecurityMap,
 } from "./types.js";
 
+const DEFAULT_CHUNK_SIZE = 10;
+const DEFAULT_DELAY_BETWEEN_CHUNKS_MS = 2000;
+
+/** Resolved at runtime so `dotenv/config` has loaded first. */
+function orchestrationChunkSize(): number {
+  return readPositiveIntFromEnv("CHUNK_SIZE", DEFAULT_CHUNK_SIZE);
+}
+
+function orchestrationChunkCooldownMs(): number {
+  return readNonNegativeIntFromEnv(
+    "DELAY_BETWEEN_CHUNKS_MS",
+    DEFAULT_DELAY_BETWEEN_CHUNKS_MS,
+  );
+}
+
+function readPositiveIntFromEnv(name: string, defaultValue: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") {
+    return defaultValue;
+  }
+  const n = Number.parseInt(raw.trim(), 10);
+  if (!Number.isFinite(n) || n < 1) {
+    return defaultValue;
+  }
+  return n;
+}
+
+function readNonNegativeIntFromEnv(name: string, defaultValue: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") {
+    return defaultValue;
+  }
+  const n = Number.parseInt(raw.trim(), 10);
+  if (!Number.isFinite(n) || n < 0) {
+    return defaultValue;
+  }
+  return n;
+}
+
+export { delay } from "./asyncHelpers.js";
 export { AgentManager } from "./AgentManager.js";
 export { architectAgent, securityAgent } from "./agents.js";
 export { runOrchestration } from "./orchestrator.js";
@@ -35,8 +76,6 @@ export type {
   SecurityMap,
   SecurityPriority,
 } from "./types.js";
-
-const FILES_PER_CHUNK = 20;
 
 function splitIntoChunks<T>(items: T[], size: number): T[][] {
   if (size <= 0) {
@@ -82,6 +121,62 @@ function lookupSecurity(
     }
   }
   return undefined;
+}
+
+/**
+ * Paths (normalized) that already have an architectural layer from a prior run.
+ */
+function analyzedPathSetFromCache(cache: EnrichedAnalysisResult): Set<string> {
+  const done = new Set<string>();
+  for (const f of cache.graph.files) {
+    const layer = f.metadata?.layer;
+    if (typeof layer === "string" && layer.trim() !== "") {
+      done.add(normalizePathKey(f.path));
+    }
+  }
+  return done;
+}
+
+function seedMapsFromCache(
+  cache: EnrichedAnalysisResult,
+  layers: LayerMap,
+  security: SecurityMap,
+): void {
+  for (const ef of cache.graph.files) {
+    const layer = ef.metadata?.layer;
+    if (typeof layer === "string" && layer.trim() !== "") {
+      layers[ef.path] = layer;
+    }
+    security[ef.path] = {
+      priority: ef.metadata.security_priority,
+      sensitiveAreas: [],
+    };
+  }
+}
+
+function filesPendingAnalysis(
+  allFiles: FileNode[],
+  doneNormalizedPaths: Set<string>,
+): FileNode[] {
+  return allFiles.filter((f) => !doneNormalizedPaths.has(normalizePathKey(f.path)));
+}
+
+async function tryReadEnrichedCheckpoint(outPath: string): Promise<EnrichedAnalysisResult | null> {
+  try {
+    await access(outPath);
+  } catch {
+    return null;
+  }
+  try {
+    const raw = await readFile(outPath, "utf8");
+    const parsed = JSON.parse(raw) as EnrichedAnalysisResult;
+    if (!parsed.graph?.files || !Array.isArray(parsed.graph.files)) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 function mergeInsightsIntoGraph(
@@ -153,6 +248,8 @@ function resolveEnrichedOutputPath(): string {
 export async function runOrchestrator(): Promise<void> {
   const graphPath = await resolveGraphInputPath();
   const outPath = resolveEnrichedOutputPath();
+  const filesPerChunk = orchestrationChunkSize();
+  const chunkCooldownMs = orchestrationChunkCooldownMs();
 
   console.log(`Loading graph from ${graphPath}`);
 
@@ -164,17 +261,32 @@ export async function runOrchestrator(): Promise<void> {
   }
 
   const fileNodes: FileNode[] = analysis.graph.files;
-  const chunks = splitIntoChunks(fileNodes, FILES_PER_CHUNK);
-
-  console.log(
-    `Found ${fileNodes.length} file(s) in ${chunks.length} chunk(s) (${FILES_PER_CHUNK} files per request).`,
-  );
-
   const mergedLayers: LayerMap = {};
   const mergedSecurity: SecurityMap = {};
 
+  const existingEnriched = await tryReadEnrichedCheckpoint(outPath);
+  if (existingEnriched) {
+    seedMapsFromCache(existingEnriched, mergedLayers, mergedSecurity);
+    const cachedCount = analyzedPathSetFromCache(existingEnriched).size;
+    console.log(
+      `Found checkpoint at ${outPath} (${cachedCount} file(s) with layer metadata); resuming incremental analysis.`,
+    );
+  }
+
+  const pendingFiles = filesPendingAnalysis(
+    fileNodes,
+    existingEnriched ? analyzedPathSetFromCache(existingEnriched) : new Set(),
+  );
+  const chunks = splitIntoChunks(pendingFiles, filesPerChunk);
+
+  console.log(
+    `Found ${fileNodes.length} file(s) total; ${pendingFiles.length} pending; ${chunks.length} chunk(s) at ${filesPerChunk} files per request (CHUNK_SIZE).`,
+  );
+
   if (fileNodes.length === 0) {
     console.log("No files to analyze; writing enriched graph with empty file list.");
+  } else if (pendingFiles.length === 0) {
+    console.log("All files already enriched from checkpoint; refreshing merged output only.");
   } else {
     const manager = new AgentManager();
 
@@ -184,8 +296,8 @@ export async function runOrchestrator(): Promise<void> {
       console.log(`Analyzing layer chunk ${layerNum} of ${chunks.length}...`);
 
       const [layers, sec] = await Promise.all([
-        architectAgent(manager, chunk, { batchSize: FILES_PER_CHUNK }),
-        securityAgent(manager, chunk, { batchSize: FILES_PER_CHUNK }),
+        architectAgent(manager, chunk, { batchSize: filesPerChunk }),
+        securityAgent(manager, chunk, { batchSize: filesPerChunk }),
       ]);
 
       Object.assign(mergedLayers, layers);
@@ -194,6 +306,14 @@ export async function runOrchestrator(): Promise<void> {
       console.log(
         `  Chunk ${layerNum}: architectural labels + security audit finished (${chunk.length} file(s)).`,
       );
+
+      const checkpoint = mergeInsightsIntoGraph(analysis, mergedLayers, mergedSecurity);
+      await writeFile(outPath, JSON.stringify(checkpoint, null, 2), "utf8");
+      console.log(`  Checkpoint written to ${outPath}`);
+
+      if (i < chunks.length - 1) {
+        await delay(chunkCooldownMs);
+      }
     }
 
     console.log("Architectural analysis complete.");
