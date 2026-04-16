@@ -1,9 +1,234 @@
 {
   "graph": {
-    "files": [],
-    "edges": []
+    "files": [
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
+        "name": "AgentManager.ts",
+        "language": "typescript",
+        "functions": [
+          "constructor",
+          "envModelOrFallback",
+          "requireEnv"
+        ],
+        "classes": [
+          "AgentManager"
+        ],
+        "imports": [
+          "./errors.js",
+          "openai",
+          "@anthropic-ai/sdk"
+        ],
+        "line_count": 59
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
+        "name": "agents.ts",
+        "language": "typescript",
+        "functions": [
+          "securityAgent",
+          "architectAgent",
+          "securityBatch",
+          "architectBatch",
+          "securityPromptForBatch",
+          "withRateLimitRetries",
+          "isRateLimitError",
+          "httpStatusFromUnknown",
+          "architectPromptForBatch",
+          "normalizeSecurityMap",
+          "readStringArray",
+          "normalizeLayerMap",
+          "textFromAnthropicContent",
+          "chunk"
+        ],
+        "classes": [],
+        "imports": [
+          "./types.js",
+          "./jsonUtils.js",
+          "./errors.js",
+          "./asyncHelpers.js",
+          "./AgentManager.js"
+        ],
+        "line_count": 285
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\asyncHelpers.ts",
+        "name": "asyncHelpers.ts",
+        "language": "typescript",
+        "functions": [
+          "delay"
+        ],
+        "classes": [],
+        "imports": [],
+        "line_count": 4
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\errors.ts",
+        "name": "errors.ts",
+        "language": "typescript",
+        "functions": [
+          "constructor",
+          "constructor"
+        ],
+        "classes": [
+          "AgentParseError",
+          "AgentApiError"
+        ],
+        "imports": [],
+        "line_count": 30
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
+        "name": "index.ts",
+        "language": "typescript",
+        "functions": [
+          "isMainModule",
+          "runOrchestrator",
+          "resolveEnrichedOutputPath",
+          "resolveGraphInputPath",
+          "mergeInsightsIntoGraph",
+          "tryReadEnrichedCheckpoint",
+          "filesPendingAnalysis",
+          "seedMapsFromCache",
+          "analyzedPathSetFromCache",
+          "lookupSecurity",
+          "lookupLayer",
+          "normalizePathKey",
+          "splitIntoChunks",
+          "readNonNegativeIntFromEnv",
+          "readPositiveIntFromEnv",
+          "orchestrationChunkCooldownMs",
+          "orchestrationChunkSize"
+        ],
+        "classes": [],
+        "imports": [
+          "./types.js",
+          "./agents.js",
+          "./AgentManager.js",
+          "./asyncHelpers.js",
+          "node:url",
+          "node:path",
+          "node:fs/promises",
+          "dotenv/config"
+        ],
+        "line_count": 346
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\jsonUtils.ts",
+        "name": "jsonUtils.ts",
+        "language": "typescript",
+        "functions": [
+          "asRecord",
+          "parseJsonObject"
+        ],
+        "classes": [],
+        "imports": [],
+        "line_count": 18
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\orchestrator.ts",
+        "name": "orchestrator.ts",
+        "language": "typescript",
+        "functions": [
+          "runOrchestration"
+        ],
+        "classes": [],
+        "imports": [
+          "./types.js",
+          "./agents.js",
+          "./AgentManager.js"
+        ],
+        "line_count": 20
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\types.ts",
+        "name": "types.ts",
+        "language": "typescript",
+        "functions": [],
+        "classes": [
+          "EnrichedAnalysisResult",
+          "EnrichedFileNode",
+          "FileNodeMetadata",
+          "OrchestrationResult",
+          "SecurityFinding",
+          "AnalysisResult",
+          "CodeGraph",
+          "Edge",
+          "FileNode"
+        ],
+        "imports": [],
+        "line_count": 76
+      }
+    ],
+    "edges": [
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\errors.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\types.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\jsonUtils.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\errors.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\asyncHelpers.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\types.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\asyncHelpers.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\orchestrator.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\types.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\orchestrator.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
+        "edge_type": "import"
+      },
+      {
+        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\orchestrator.ts",
+        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
+        "edge_type": "import"
+      }
+    ]
   },
-  "total_files": 0,
-  "total_lines": 0,
-  "analysis_time_ms": 19
+  "total_files": 8,
+  "total_files_walked": 22,
+  "total_lines": 838,
+  "analysis_time_ms": 13
 }

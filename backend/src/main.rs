@@ -46,7 +46,8 @@ fn run() -> Result<()> {
 
 fn print_summary(result: &models::AnalysisResult, elapsed_ms: u64) {
     println!("Analysis summary");
-    println!("  Total files found: {}", result.total_files);
+    println!("  Local Source Files: {}", result.total_files);
+    println!("  Total Files: {}", result.total_files_walked);
     println!("  Total lines of code: {}", result.total_lines);
     println!("  Time (ms): {}", elapsed_ms);
 }

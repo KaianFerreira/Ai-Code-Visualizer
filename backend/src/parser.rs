@@ -14,6 +14,9 @@ use crate::models::{AnalysisResult, CodeGraph, Edge, FileNode};
 
 const SOURCE_EXTENSIONS: &[&str] = &["ts", "tsx", "js", "cs"];
 
+/// Directory names we never descend into (much faster than collecting files and filtering later).
+const SKIP_DIR_NAMES: &[&str] = &["node_modules", ".git", "dist", "target", "bin", "obj"];
+
 /// Loaded tree-sitter grammars. Cheap to clone (`Language` is a shared pointer).
 #[derive(Clone)]
 pub struct GrammarSet {
@@ -81,7 +84,7 @@ impl CodeParser {
             .canonicalize()
             .with_context(|| format!("canonicalize root {}", root.display()))?;
 
-        let paths = collect_source_paths(&root)?;
+        let (paths, total_files_walked) = collect_source_paths(&root)?;
         let grammars = self.grammars.clone();
 
         let results: Vec<Result<FileNode>> = paths
@@ -94,27 +97,45 @@ impl CodeParser {
             files.push(r?);
         }
 
-        let edges = build_import_edges(&files, &root);
-        let total_files = files.len() as u64;
-        let total_lines = files.iter().map(|f| f.line_count as u64).sum();
+        let local_source_files = files.len() as u64;
+        let (edges, reference_nodes) = build_import_edges(&files, &root);
+        files.extend(reference_nodes);
+
+        let total_lines = files
+            .iter()
+            .map(|f| f.line_count as u64)
+            .sum::<u64>();
         let analysis_time_ms = started.elapsed().as_millis() as u64;
 
         Ok(AnalysisResult::new(
             CodeGraph { files, edges },
-            total_files,
+            local_source_files,
+            total_files_walked,
             total_lines,
             analysis_time_ms,
         ))
     }
 }
 
-fn collect_source_paths(root: &Path) -> Result<Vec<PathBuf>> {
+fn collect_source_paths(root: &Path) -> Result<(Vec<PathBuf>, u64)> {
     let mut out = Vec::new();
-    for entry in WalkDir::new(root).follow_links(false) {
+    let mut total_files_walked: u64 = 0;
+    let walker = WalkDir::new(root)
+        .follow_links(false)
+        .into_iter()
+        .filter_entry(|e| {
+            if e.depth() == 0 {
+                return true;
+            }
+            let name = e.file_name().to_string_lossy();
+            !SKIP_DIR_NAMES.iter().any(|&skip| skip == name.as_ref())
+        });
+    for entry in walker {
         let entry = entry.with_context(|| "walk directory")?;
         if !entry.file_type().is_file() {
             continue;
         }
+        total_files_walked += 1;
         let path = entry.path();
         let Some(ext) = path.extension().and_then(|e| e.to_str()) else {
             continue;
@@ -123,7 +144,7 @@ fn collect_source_paths(root: &Path) -> Result<Vec<PathBuf>> {
             out.push(path.to_path_buf());
         }
     }
-    Ok(out)
+    Ok((out, total_files_walked))
 }
 
 fn parse_file_to_node(path: &Path, grammars: &GrammarSet) -> Result<FileNode> {
@@ -354,6 +375,10 @@ impl<'a> FileIndex<'a> {
         Self { by_path }
     }
 
+    fn node_for_normalized_path(&self, key: &str) -> Option<&'a FileNode> {
+        self.by_path.get(key).copied()
+    }
+
     fn resolve(&self, from_path: &str, spec: &str) -> Option<&'a FileNode> {
         if spec.starts_with('.') {
             let base = Path::new(from_path).parent()?;
@@ -383,10 +408,40 @@ fn candidate_paths(base: &str) -> Vec<String> {
     v
 }
 
-fn build_import_edges(files: &[FileNode], _root: &Path) -> Vec<Edge> {
+fn import_path_candidates(joined: PathBuf) -> Vec<PathBuf> {
+    let mut v = vec![joined.clone()];
+    for ext in SOURCE_EXTENSIONS {
+        v.push(joined.with_extension(ext));
+    }
+    for ext in SOURCE_EXTENSIONS {
+        v.push(joined.join(format!("index.{ext}")));
+    }
+    v
+}
+
+/// Resolve a relative import to an on-disk file under `root` (e.g. into a skipped folder).
+fn resolve_relative_on_disk(from_path: &str, spec: &str, root: &Path) -> Option<PathBuf> {
+    let base = Path::new(from_path).parent()?;
+    let joined = base.join(spec);
+    for cand in import_path_candidates(joined) {
+        if cand.is_file() {
+            let ok = cand.canonicalize().ok()?;
+            if ok.starts_with(root) {
+                return Some(ok);
+            }
+        }
+    }
+    None
+}
+
+fn build_import_edges(files: &[FileNode], root: &Path) -> (Vec<Edge>, Vec<FileNode>) {
+    let root = root
+        .canonicalize()
+        .unwrap_or_else(|_| root.to_path_buf());
     let index = FileIndex::new(files);
     let mut seen: HashSet<(String, String)> = HashSet::new();
     let mut edges = Vec::new();
+    let mut stub_map: HashMap<String, FileNode> = HashMap::new();
 
     for file in files {
         for spec in &file.imports {
@@ -395,8 +450,28 @@ fn build_import_edges(files: &[FileNode], _root: &Path) -> Vec<Edge> {
                 continue;
             }
 
-            if let Some(target) = index.resolve(&file.path, spec_trim) {
-                let pair = (file.path.clone(), target.path.clone());
+            let target_path: Option<String> =
+                if let Some(target) = index.resolve(&file.path, spec_trim) {
+                    Some(target.path.clone())
+                } else if spec_trim.starts_with('.') {
+                    resolve_relative_on_disk(&file.path, spec_trim, &root).map(|p| {
+                        let nk = normalize_path_key(&p);
+                        if let Some(n) = index.node_for_normalized_path(&nk) {
+                            n.path.clone()
+                        } else {
+                            stub_map
+                                .entry(nk.clone())
+                                .or_insert_with(|| FileNode::reference_stub(p))
+                                .path
+                                .clone()
+                        }
+                    })
+                } else {
+                    None
+                };
+
+            if let Some(tp) = target_path {
+                let pair = (file.path.clone(), tp);
                 if seen.insert(pair.clone()) {
                     edges.push(Edge {
                         source: pair.0,
@@ -408,7 +483,8 @@ fn build_import_edges(files: &[FileNode], _root: &Path) -> Vec<Edge> {
         }
     }
 
-    edges
+    let reference_nodes: Vec<FileNode> = stub_map.into_values().collect();
+    (edges, reference_nodes)
 }
 
 fn node_text(node: &tree_sitter::Node<'_>, source: &str) -> Option<String> {
