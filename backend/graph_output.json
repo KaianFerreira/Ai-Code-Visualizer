@@ -2,233 +2,347 @@
   "graph": {
     "files": [
       {
-        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
-        "name": "AgentManager.ts",
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\app\\api\\scan\\route.ts",
+        "name": "route.ts",
+        "directory": "app/api/scan/",
+        "relative_path": "app/api/scan/route.ts",
+        "depth": 3,
+        "folder_group": "app/api/scan",
         "language": "typescript",
         "functions": [
-          "constructor",
-          "envModelOrFallback",
-          "requireEnv"
+          "POST"
+        ],
+        "classes": [],
+        "imports": [
+          "@/lib/scan-result",
+          "@/lib/brazil-retail-pipeline",
+          "@/lib/agentic-crop",
+          "next/server",
+          "path",
+          "fs/promises",
+          "@anthropic-ai/sdk"
+        ],
+        "line_count": 130
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\app\\layout.tsx",
+        "name": "layout.tsx",
+        "directory": "app/",
+        "relative_path": "app/layout.tsx",
+        "depth": 1,
+        "folder_group": "app",
+        "language": "typescriptreact",
+        "functions": [
+          "RootLayout"
+        ],
+        "classes": [],
+        "imports": [
+          "./globals.css",
+          "sonner",
+          "next/font/google",
+          "next"
+        ],
+        "line_count": 39
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\app\\page.tsx",
+        "name": "page.tsx",
+        "directory": "app/",
+        "relative_path": "app/page.tsx",
+        "depth": 1,
+        "folder_group": "app",
+        "language": "typescriptreact",
+        "functions": [
+          "Home"
+        ],
+        "classes": [],
+        "imports": [
+          "@/components/scanner/clear-cart-button",
+          "@/components/scanner/cart-list",
+          "@/components/scanner/camera-capture"
+        ],
+        "line_count": 40
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\components\\scanner\\camera-capture.tsx",
+        "name": "camera-capture.tsx",
+        "directory": "components/scanner/",
+        "relative_path": "components/scanner/camera-capture.tsx",
+        "depth": 2,
+        "folder_group": "components/scanner",
+        "language": "typescriptreact",
+        "functions": [
+          "CameraCapture",
+          "scanErrorMessage",
+          "parseScanResponse",
+          "fileToDataUrl"
+        ],
+        "classes": [],
+        "imports": [
+          "@/lib/utils",
+          "@/store/useCartStore",
+          "@/lib/scan-result",
+          "@/lib/prepare-image-for-scan",
+          "@/components/ui/button",
+          "sonner",
+          "lucide-react",
+          "react"
+        ],
+        "line_count": 263
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\components\\scanner\\cart-list.tsx",
+        "name": "cart-list.tsx",
+        "directory": "components/scanner/",
+        "relative_path": "components/scanner/cart-list.tsx",
+        "depth": 2,
+        "folder_group": "components/scanner",
+        "language": "typescriptreact",
+        "functions": [
+          "CartList",
+          "CartImageLightbox",
+          "CartItemQuantity",
+          "setQuantity",
+          "ScanTimestamp",
+          "CartListRow",
+          "useScanCompleteCelebration",
+          "useMounted",
+          "formatBrl",
+          "CartItemThumbnail"
+        ],
+        "classes": [],
+        "imports": [
+          "@/lib/utils",
+          "@/store/useCartStore",
+          "@/store/useCartStore",
+          "@/components/ui/card",
+          "@/components/ui/button",
+          "lucide-react",
+          "framer-motion",
+          "react"
+        ],
+        "line_count": 502
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\components\\scanner\\clear-cart-button.tsx",
+        "name": "clear-cart-button.tsx",
+        "directory": "components/scanner/",
+        "relative_path": "components/scanner/clear-cart-button.tsx",
+        "depth": 2,
+        "folder_group": "components/scanner",
+        "language": "typescriptreact",
+        "functions": [
+          "ClearCartButton"
+        ],
+        "classes": [],
+        "imports": [
+          "@/store/useCartStore",
+          "@/components/ui/button"
+        ],
+        "line_count": 19
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\components\\ui\\button.tsx",
+        "name": "button.tsx",
+        "directory": "components/ui/",
+        "relative_path": "components/ui/button.tsx",
+        "depth": 2,
+        "folder_group": "components/ui",
+        "language": "typescriptreact",
+        "functions": [
+          "Button"
+        ],
+        "classes": [],
+        "imports": [
+          "@/lib/utils",
+          "radix-ui",
+          "class-variance-authority",
+          "react"
+        ],
+        "line_count": 67
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\components\\ui\\card.tsx",
+        "name": "card.tsx",
+        "directory": "components/ui/",
+        "relative_path": "components/ui/card.tsx",
+        "depth": 2,
+        "folder_group": "components/ui",
+        "language": "typescriptreact",
+        "functions": [
+          "CardFooter",
+          "CardContent",
+          "CardAction",
+          "CardDescription",
+          "CardTitle",
+          "CardHeader",
+          "Card"
+        ],
+        "classes": [],
+        "imports": [
+          "@/lib/utils",
+          "react"
+        ],
+        "line_count": 86
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\lib\\agentic-crop.ts",
+        "name": "agentic-crop.ts",
+        "directory": "lib/",
+        "relative_path": "lib/agentic-crop.ts",
+        "depth": 1,
+        "folder_group": "lib",
+        "language": "typescript",
+        "functions": [
+          "runAgenticCrop",
+          "runScoutPriceTagBbox",
+          "cropOrientedImageByNormalizedBbox",
+          "padNormalizedBbox",
+          "validateNormalizedBbox",
+          "prepareOrientedImageAndScoutPreview",
+          "clamp01"
+        ],
+        "classes": [],
+        "imports": [
+          "@/lib/scan-result",
+          "@/lib/brazil-retail-pipeline",
+          "sharp",
+          "@anthropic-ai/sdk"
+        ],
+        "line_count": 236
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\lib\\brazil-retail-pipeline.ts",
+        "name": "brazil-retail-pipeline.ts",
+        "directory": "lib/",
+        "relative_path": "lib/brazil-retail-pipeline.ts",
+        "depth": 1,
+        "folder_group": "lib",
+        "language": "typescript",
+        "functions": [
+          "runBrazilRetailScan",
+          "parseAssistantJsonObject",
+          "extractAssistantText",
+          "isAnthropicImageMediaType",
+          "constructor"
         ],
         "classes": [
-          "AgentManager"
+          "ScanPipelineError"
         ],
         "imports": [
-          "./errors.js",
-          "openai",
+          "@/lib/scan-result",
+          "zod",
           "@anthropic-ai/sdk"
+        ],
+        "line_count": 182
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\lib\\prepare-image-for-scan.ts",
+        "name": "prepare-image-for-scan.ts",
+        "directory": "lib/",
+        "relative_path": "lib/prepare-image-for-scan.ts",
+        "depth": 1,
+        "folder_group": "lib",
+        "language": "typescript",
+        "functions": [
+          "decodeViaHtmlImage",
+          "decodeToJpegFile",
+          "toJpegFileFromCanvas",
+          "prepareImageFileForScan"
+        ],
+        "classes": [],
+        "imports": [],
+        "line_count": 98
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\lib\\scan-result.ts",
+        "name": "scan-result.ts",
+        "directory": "lib/",
+        "relative_path": "lib/scan-result.ts",
+        "depth": 1,
+        "folder_group": "lib",
+        "language": "typescript",
+        "functions": [
+          "toClientScanPayload"
+        ],
+        "classes": [],
+        "imports": [
+          "zod"
+        ],
+        "line_count": 65
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\lib\\utils.ts",
+        "name": "utils.ts",
+        "directory": "lib/",
+        "relative_path": "lib/utils.ts",
+        "depth": 1,
+        "folder_group": "lib",
+        "language": "typescript",
+        "functions": [
+          "cn"
+        ],
+        "classes": [],
+        "imports": [
+          "tailwind-merge",
+          "clsx"
+        ],
+        "line_count": 6
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\next.config.ts",
+        "name": "next.config.ts",
+        "directory": "",
+        "relative_path": "next.config.ts",
+        "depth": 0,
+        "folder_group": ".",
+        "language": "typescript",
+        "functions": [],
+        "classes": [],
+        "imports": [
+          "next"
+        ],
+        "line_count": 8
+      },
+      {
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\store\\useCartStore.ts",
+        "name": "useCartStore.ts",
+        "directory": "store/",
+        "relative_path": "store/useCartStore.ts",
+        "depth": 1,
+        "folder_group": "store",
+        "language": "typescript",
+        "functions": [],
+        "classes": [],
+        "imports": [
+          "zustand"
         ],
         "line_count": 59
       },
       {
-        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
-        "name": "agents.ts",
-        "language": "typescript",
-        "functions": [
-          "securityAgent",
-          "architectAgent",
-          "securityBatch",
-          "architectBatch",
-          "securityPromptForBatch",
-          "withRateLimitRetries",
-          "isRateLimitError",
-          "httpStatusFromUnknown",
-          "architectPromptForBatch",
-          "normalizeSecurityMap",
-          "readStringArray",
-          "normalizeLayerMap",
-          "textFromAnthropicContent",
-          "chunk"
-        ],
-        "classes": [],
-        "imports": [
-          "./types.js",
-          "./jsonUtils.js",
-          "./errors.js",
-          "./asyncHelpers.js",
-          "./AgentManager.js"
-        ],
-        "line_count": 285
-      },
-      {
-        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\asyncHelpers.ts",
-        "name": "asyncHelpers.ts",
-        "language": "typescript",
-        "functions": [
-          "delay"
-        ],
-        "classes": [],
-        "imports": [],
-        "line_count": 4
-      },
-      {
-        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\errors.ts",
-        "name": "errors.ts",
-        "language": "typescript",
-        "functions": [
-          "constructor",
-          "constructor"
-        ],
-        "classes": [
-          "AgentParseError",
-          "AgentApiError"
-        ],
-        "imports": [],
-        "line_count": 30
-      },
-      {
-        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
-        "name": "index.ts",
-        "language": "typescript",
-        "functions": [
-          "isMainModule",
-          "runOrchestrator",
-          "resolveEnrichedOutputPath",
-          "resolveGraphInputPath",
-          "mergeInsightsIntoGraph",
-          "tryReadEnrichedCheckpoint",
-          "filesPendingAnalysis",
-          "seedMapsFromCache",
-          "analyzedPathSetFromCache",
-          "lookupSecurity",
-          "lookupLayer",
-          "normalizePathKey",
-          "splitIntoChunks",
-          "readNonNegativeIntFromEnv",
-          "readPositiveIntFromEnv",
-          "orchestrationChunkCooldownMs",
-          "orchestrationChunkSize"
-        ],
-        "classes": [],
-        "imports": [
-          "./types.js",
-          "./agents.js",
-          "./AgentManager.js",
-          "./asyncHelpers.js",
-          "node:url",
-          "node:path",
-          "node:fs/promises",
-          "dotenv/config"
-        ],
-        "line_count": 346
-      },
-      {
-        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\jsonUtils.ts",
-        "name": "jsonUtils.ts",
-        "language": "typescript",
-        "functions": [
-          "asRecord",
-          "parseJsonObject"
-        ],
-        "classes": [],
-        "imports": [],
-        "line_count": 18
-      },
-      {
-        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\orchestrator.ts",
-        "name": "orchestrator.ts",
-        "language": "typescript",
-        "functions": [
-          "runOrchestration"
-        ],
-        "classes": [],
-        "imports": [
-          "./types.js",
-          "./agents.js",
-          "./AgentManager.js"
-        ],
-        "line_count": 20
-      },
-      {
-        "path": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\types.ts",
-        "name": "types.ts",
-        "language": "typescript",
+        "path": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\app\\globals.css",
+        "name": "globals.css",
+        "directory": "app/",
+        "relative_path": "app/globals.css",
+        "depth": 1,
+        "folder_group": "app",
+        "language": "reference",
         "functions": [],
-        "classes": [
-          "EnrichedAnalysisResult",
-          "EnrichedFileNode",
-          "FileNodeMetadata",
-          "OrchestrationResult",
-          "SecurityFinding",
-          "AnalysisResult",
-          "CodeGraph",
-          "Edge",
-          "FileNode"
-        ],
+        "classes": [],
         "imports": [],
-        "line_count": 76
+        "line_count": 0
       }
     ],
     "edges": [
       {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\errors.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\types.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\jsonUtils.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\errors.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\asyncHelpers.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\types.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\index.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\asyncHelpers.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\orchestrator.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\types.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\orchestrator.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\agents.ts",
-        "edge_type": "import"
-      },
-      {
-        "source": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\orchestrator.ts",
-        "target": "\\\\?\\C:\\Users\\Kaian\\projects\\AI-Native-Code-Visualizer\\ai-bridge\\src\\AgentManager.ts",
+        "source": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\app\\layout.tsx",
+        "target": "\\\\?\\C:\\Users\\Kaian\\AppData\\Local\\Temp\\.tmpCNEQY5\\app\\globals.css",
         "edge_type": "import"
       }
     ]
   },
-  "total_files": 8,
-  "total_files_walked": 22,
-  "total_lines": 838,
-  "analysis_time_ms": 13
+  "total_files": 15,
+  "total_files_walked": 32,
+  "total_lines": 1800,
+  "analysis_time_ms": 27
 }

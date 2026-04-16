@@ -1,5 +1,5 @@
 backend/target
-ai-bridge/node_modules
+node_modules
 ai-bridge/dist
 ai-bridge/enriched_graph.json
 ai-bridge/.env

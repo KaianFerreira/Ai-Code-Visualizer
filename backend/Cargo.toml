@@ -5,6 +5,9 @@ edition = "2024"
 build = "build.rs"
 
 [dependencies]
+axum = { version = "0.8", features = ["json"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+tower-http = { version = "0.6", features = ["cors"] }
 git2 = "0.18"
 tempfile = "3.8"
 anyhow = "1.0.102"
