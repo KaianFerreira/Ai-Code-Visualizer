@@ -161,7 +161,3 @@ Produces enriched graph JSON you can place as **`frontend/public/enriched_graph.
 | `ai-bridge` | `npm run build` | Compile to `dist/`. |
 
 ---
-
-## License
-
-See repository files for license terms if specified.
