@@ -10,7 +10,10 @@ use rayon::prelude::*;
 use tree_sitter::Language;
 use walkdir::WalkDir;
 
-use crate::models::{AnalysisResult, CodeGraph, Edge, FileNode};
+use crate::models::{
+    folder_hierarchy_from_relative_path, relative_directory_for_file_path,
+    relative_path_for_file_path, AnalysisResult, CodeGraph, Edge, FileNode,
+};
 
 const SOURCE_EXTENSIONS: &[&str] = &["ts", "tsx", "js", "cs"];
 
@@ -89,7 +92,7 @@ impl CodeParser {
 
         let results: Vec<Result<FileNode>> = paths
             .par_iter()
-            .map(|path| parse_file_to_node(path, &grammars))
+            .map(|path| parse_file_to_node(path, &root, &grammars))
             .collect();
 
         let mut files = Vec::with_capacity(results.len());
@@ -147,7 +150,7 @@ fn collect_source_paths(root: &Path) -> Result<(Vec<PathBuf>, u64)> {
     Ok((out, total_files_walked))
 }
 
-fn parse_file_to_node(path: &Path, grammars: &GrammarSet) -> Result<FileNode> {
+fn parse_file_to_node(path: &Path, root: &Path, grammars: &GrammarSet) -> Result<FileNode> {
     let ext = path
         .extension()
         .and_then(|e| e.to_str())
@@ -194,10 +197,17 @@ fn parse_file_to_node(path: &Path, grammars: &GrammarSet) -> Result<FileNode> {
         .and_then(|s| s.to_str())
         .unwrap_or("")
         .to_string();
+    let directory = relative_directory_for_file_path(&path_buf, root);
+    let relative_path = relative_path_for_file_path(&path_buf, root);
+    let (depth, folder_group) = folder_hierarchy_from_relative_path(&relative_path);
 
     Ok(FileNode {
         path: path_buf.to_string_lossy().into_owned(),
         name,
+        directory,
+        relative_path,
+        depth,
+        folder_group,
         language: language_label.to_string(),
         functions,
         classes,
@@ -461,7 +471,7 @@ fn build_import_edges(files: &[FileNode], root: &Path) -> (Vec<Edge>, Vec<FileNo
                         } else {
                             stub_map
                                 .entry(nk.clone())
-                                .or_insert_with(|| FileNode::reference_stub(p))
+                                .or_insert_with(|| FileNode::reference_stub(p, &root))
                                 .path
                                 .clone()
                         }

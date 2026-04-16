@@ -9,6 +9,9 @@ interface EnrichedFile {
   path: string
   name: string
   directory?: string
+  relative_path?: string
+  depth?: number
+  folder_group?: string
   line_count: number
   functions: string[]
   classes: string[]
@@ -75,6 +78,10 @@ interface GraphNode {
   security_priority: string
   functions: string[]
   classes: string[]
+  /** Folder depth from repo root (0 = file at root). */
+  depth: number
+  /** Clustering key: parent folder path, `"."` at repo root. */
+  folder_group: string
   x?: number
   y?: number
 }
@@ -291,6 +298,34 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 /** Flat-top hexagon path centered at (x,y). */
+/** Matches backend `folder_hierarchy_from_relative_path` for older JSON without these fields. */
+function folderHierarchyFromRelativePath(relativePath: string): { depth: number; folder_group: string } {
+  const normalized = relativePath.trim().replace(/\\/g, '/')
+  const pathOnly = normalized.replace(/^\/+/, '').replace(/\/+$/, '')
+  if (!pathOnly) return { depth: 0, folder_group: '.' }
+  const idx = pathOnly.lastIndexOf('/')
+  if (idx === -1) return { depth: 0, folder_group: '.' }
+  const parent = pathOnly.slice(0, idx).trim().replace(/\/+$/, '')
+  if (!parent) return { depth: 0, folder_group: '.' }
+  const depth = parent.split('/').filter(Boolean).length
+  return { depth, folder_group: parent }
+}
+
+function resolveFolderHierarchy(f: EnrichedFile): { depth: number; folder_group: string } {
+  if (f.depth !== undefined && f.folder_group !== undefined && f.folder_group !== '') {
+    return { depth: f.depth, folder_group: f.folder_group }
+  }
+  if (f.relative_path?.trim()) {
+    const d = folderHierarchyFromRelativePath(f.relative_path)
+    if (f.depth !== undefined) d.depth = f.depth
+    if (f.folder_group !== undefined && f.folder_group !== '') d.folder_group = f.folder_group
+    return d
+  }
+  const dir = (f.directory ?? '').replace(/\\/g, '/').replace(/\/+$/, '').trim()
+  if (!dir) return { depth: 0, folder_group: '.' }
+  return { depth: dir.split('/').filter(Boolean).length, folder_group: dir }
+}
+
 function hexPath(ctx: CanvasRenderingContext2D, x: number, y: number, R: number): void {
   ctx.beginPath()
   for (let i = 0; i < 6; i++) {
@@ -309,6 +344,7 @@ function parseGraphPayload(data: EnrichedPayload): { nodes: GraphNode[]; links: 
     if (!id) {
       throw new Error('Each file/node must have a path or id')
     }
+    const { depth, folder_group } = resolveFolderHierarchy(f)
     return {
       id,
       name: f.name || String(id).split(/[/\\]/).pop() || id,
@@ -318,6 +354,8 @@ function parseGraphPayload(data: EnrichedPayload): { nodes: GraphNode[]; links: 
       security_priority: f.metadata?.security_priority ?? 'none',
       functions: f.functions ?? [],
       classes: f.classes ?? [],
+      depth,
+      folder_group,
     }
   })
   const idToNode = new Map(nodes.map((n) => [n.id, n]))

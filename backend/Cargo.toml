@@ -2,8 +2,11 @@
 name = "backend"
 version = "0.1.0"
 edition = "2024"
+build = "build.rs"
 
 [dependencies]
+git2 = "0.18"
+tempfile = "3.8"
 anyhow = "1.0.102"
 dashmap = "6.1.0"
 rayon = "1.12.0"

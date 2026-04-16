@@ -9,6 +9,14 @@ export type ArchitecturalLayer =
 export interface FileNode {
   path: string;
   name: string;
+  /** Relative parent path from analysis root, e.g. `src/components/` */
+  directory?: string;
+  /** Repo-relative path including file name, e.g. `src/components/ui/Button.tsx` */
+  relative_path?: string;
+  /** Folder depth from repo root (0 = file at root). */
+  depth?: number;
+  /** Parent folder key for clustering (no trailing slash); `"."` at repo root. */
+  folder_group?: string;
   language: string;
   functions: string[];
   classes: string[];
